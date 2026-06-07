@@ -29,6 +29,8 @@ public class PlayerController : MonoBehaviour
     public LayerMask groundLayer;
 
     private Rigidbody2D rb;
+    private Animator animator;
+    private SpriteRenderer[] spriteRenderers;
     private bool isGrounded;
     private bool isTouchingLeftWall;
     private bool isTouchingRightWall;
@@ -42,6 +44,14 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
+
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+
         rb.freezeRotation = true;
         rb.gravityScale = gravityScale;
     }
@@ -56,11 +66,13 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleWallSlide();
         HandleJump();
+        UpdateAnimatorParameters();
     }
 
     void HandleMovement()
     {
         float moveInput = Input.GetAxisRaw("Horizontal");
+        UpdateFacing(moveInput);
 
         if (wallJumpControlLockCounter > 0f)
         {
@@ -68,6 +80,39 @@ public class PlayerController : MonoBehaviour
         }
 
         rb.velocity = new Vector2(moveInput * moveSpeed, rb.velocity.y);
+    }
+
+    void UpdateFacing(float horizontalInput)
+    {
+        if (spriteRenderers == null || spriteRenderers.Length == 0)
+        {
+            return;
+        }
+
+        if (Mathf.Abs(horizontalInput) < 0.01f && wallJumpControlLockCounter > 0f && rb != null)
+        {
+            horizontalInput = rb.velocity.x;
+        }
+
+        if (horizontalInput > 0.01f)
+        {
+            SetSpriteFlip(false);
+        }
+        else if (horizontalInput < -0.01f)
+        {
+            SetSpriteFlip(true);
+        }
+    }
+
+    void SetSpriteFlip(bool flipX)
+    {
+        foreach (var spriteRenderer in spriteRenderers)
+        {
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.flipX = flipX;
+            }
+        }
     }
 
     void HandleWallSlide()
@@ -199,6 +244,36 @@ public class PlayerController : MonoBehaviour
         {
             wallJumpControlLockCounter -= Time.deltaTime;
         }
+    }
+
+    void UpdateAnimatorParameters()
+    {
+        if (animator == null || rb == null)
+        {
+            return;
+        }
+
+        animator.SetFloat("Speed", Mathf.Abs(rb.velocity.x));
+        animator.SetFloat("VerticalVelocity", rb.velocity.y);
+        animator.SetBool("IsGrounded", isGrounded);
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Trap") && GameManager.Instance != null)
+        {
+            GameManager.Instance.KillPlayer();
+        }
+    }
+
+    public void ResetPlayerState()
+    {
+        jumpBufferCounter = 0f;
+        leftWallCoyoteCounter = 0f;
+        rightWallCoyoteCounter = 0f;
+        wallJumpControlLockCounter = 0f;
+        isWallSliding = false;
+        wallSide = 0;
     }
 
     void OnDrawGizmosSelected()
