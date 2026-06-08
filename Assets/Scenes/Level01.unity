@@ -8471,7 +8471,6 @@ GameObject:
   - component: {fileID: 961093087}
   - component: {fileID: 961093086}
   - component: {fileID: 961093085}
-  - component: {fileID: 961093090}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -8656,27 +8655,6 @@ Transform:
   - {fileID: 772076238}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &961093090
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 961093084}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 90f68682d762b8046b812868ef4d4236, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1593798621
 GameObject:
   m_ObjectHideFlags: 0
@@ -8833,6 +8811,7 @@ MonoBehaviour:
   player: {fileID: 961093089}
   respawnPosition: {x: -8.08, y: -2.34}
   respawnDelay: 0
+  deathAnimationDuration: 0.67
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

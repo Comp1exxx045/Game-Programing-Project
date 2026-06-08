@@ -8,8 +8,11 @@ public class GameManager : MonoBehaviour
     public Transform player;
     public Vector2 respawnPosition;
     public float respawnDelay = 0f;
+    public float deathAnimationDuration = 0.67f;
 
     private bool isRespawning;
+    private bool isDead;
+    private RigidbodyConstraints2D savedPlayerConstraints;
 
     void Awake()
     {
@@ -24,7 +27,7 @@ public class GameManager : MonoBehaviour
 
     public void KillPlayer()
     {
-        if (isRespawning)
+        if (isDead || isRespawning)
         {
             return;
         }
@@ -35,7 +38,40 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(RespawnPlayer());
+        StartCoroutine(DeathAndRespawnRoutine());
+    }
+
+    private IEnumerator DeathAndRespawnRoutine()
+    {
+        isDead = true;
+
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        Rigidbody2D playerRigidbody = player.GetComponent<Rigidbody2D>();
+
+        if (playerController != null)
+        {
+            playerController.SetControlEnabled(false);
+        }
+
+        if (playerRigidbody != null)
+        {
+            savedPlayerConstraints = playerRigidbody.constraints;
+            playerRigidbody.velocity = Vector2.zero;
+            playerRigidbody.angularVelocity = 0f;
+            playerRigidbody.constraints = RigidbodyConstraints2D.FreezeAll;
+        }
+
+        if (playerController != null)
+        {
+            playerController.PlayDeathAnimation();
+        }
+
+        if (deathAnimationDuration > 0f)
+        {
+            yield return new WaitForSeconds(deathAnimationDuration);
+        }
+
+        yield return StartCoroutine(RespawnPlayer());
     }
 
     private IEnumerator RespawnPlayer()
@@ -52,6 +88,7 @@ public class GameManager : MonoBehaviour
         Rigidbody2D playerRigidbody = player.GetComponent<Rigidbody2D>();
         if (playerRigidbody != null)
         {
+            playerRigidbody.constraints = savedPlayerConstraints;
             playerRigidbody.velocity = Vector2.zero;
             playerRigidbody.angularVelocity = 0f;
         }
@@ -60,8 +97,10 @@ public class GameManager : MonoBehaviour
         if (playerController != null)
         {
             playerController.ResetPlayerState();
+            playerController.SetControlEnabled(true);
         }
 
         isRespawning = false;
+        isDead = false;
     }
 }

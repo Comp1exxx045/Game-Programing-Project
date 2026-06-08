@@ -40,14 +40,25 @@ public class PlayerController : MonoBehaviour
     private float leftWallCoyoteCounter;
     private float rightWallCoyoteCounter;
     private float wallJumpControlLockCounter;
+    private bool controlEnabled = true;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+
+        Animator[] animators = GetComponentsInChildren<Animator>();
+        foreach (Animator childAnimator in animators)
+        {
+            if (childAnimator.transform != transform)
+            {
+                animator = childAnimator;
+                break;
+            }
+        }
+
         if (animator == null)
         {
-            animator = GetComponentInChildren<Animator>();
+            animator = GetComponent<Animator>();
         }
 
         spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
@@ -58,6 +69,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (!controlEnabled)
+        {
+            UpdateAnimatorParameters();
+            return;
+        }
+
         UpdateJumpBuffer();
         CheckGrounded();
         CheckWalls();
@@ -274,6 +291,25 @@ public class PlayerController : MonoBehaviour
         wallJumpControlLockCounter = 0f;
         isWallSliding = false;
         wallSide = 0;
+
+        if (animator != null)
+        {
+            animator.ResetTrigger("Die");
+            animator.Play("Idle", 0, 0f);
+        }
+    }
+
+    public void SetControlEnabled(bool enabled)
+    {
+        controlEnabled = enabled;
+    }
+
+    public void PlayDeathAnimation()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");
+        }
     }
 
     void OnDrawGizmosSelected()
