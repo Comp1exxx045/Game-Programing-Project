@@ -7,11 +7,13 @@ public class GameManager : MonoBehaviour
 
     public Transform player;
     public Vector2 respawnPosition;
+    public bool usePlayerStartPositionAsRespawn;
     public float respawnDelay = 0f;
     public float deathAnimationDuration = 0.67f;
 
     private bool isRespawning;
     private bool isDead;
+    private bool respawnPositionInitialized;
     private RigidbodyConstraints2D savedPlayerConstraints;
 
     void Awake()
@@ -23,6 +25,15 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+        FindPlayerIfNeeded();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     public void KillPlayer()
@@ -32,7 +43,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (player == null)
+        if (!FindPlayerIfNeeded())
         {
             Debug.LogWarning("GameManager cannot respawn Player because player is not assigned.");
             return;
@@ -102,5 +113,25 @@ public class GameManager : MonoBehaviour
 
         isRespawning = false;
         isDead = false;
+    }
+
+    private bool FindPlayerIfNeeded()
+    {
+        if (player == null)
+        {
+            PlayerController playerController = FindObjectOfType<PlayerController>(true);
+            if (playerController != null)
+            {
+                player = playerController.transform;
+            }
+        }
+
+        if (player != null && usePlayerStartPositionAsRespawn && !respawnPositionInitialized)
+        {
+            respawnPosition = player.position;
+            respawnPositionInitialized = true;
+        }
+
+        return player != null;
     }
 }
