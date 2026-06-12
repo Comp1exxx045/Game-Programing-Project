@@ -277,7 +277,19 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Trap") && GameManager.Instance != null)
+        TryKillPlayer(other);
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        TryKillPlayer(collision.collider);
+    }
+
+    private void TryKillPlayer(Collider2D other)
+    {
+        if (other != null &&
+            other.CompareTag("Trap") &&
+            GameManager.Instance != null)
         {
             GameManager.Instance.KillPlayer();
         }
