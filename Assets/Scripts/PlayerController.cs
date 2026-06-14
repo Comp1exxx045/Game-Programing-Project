@@ -41,8 +41,12 @@ public class PlayerController : MonoBehaviour
     private float rightWallCoyoteCounter;
     private float wallJumpControlLockCounter;
     private bool controlEnabled = true;
+    private MovingPlatform2D currentMovingPlatform;
 
-    void Start()
+    /// <summary>
+    /// Caches player components and applies the configured physics settings.
+    /// </summary>
+    private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
 
@@ -67,7 +71,10 @@ public class PlayerController : MonoBehaviour
         rb.gravityScale = gravityScale;
     }
 
-    void Update()
+    /// <summary>
+    /// Updates movement, jumping, wall interactions, and animation each frame.
+    /// </summary>
+    private void Update()
     {
         if (!controlEnabled)
         {
@@ -86,7 +93,10 @@ public class PlayerController : MonoBehaviour
         UpdateAnimatorParameters();
     }
 
-    void HandleMovement()
+    /// <summary>
+    /// Applies horizontal input and inherits horizontal moving-platform velocity.
+    /// </summary>
+    private void HandleMovement()
     {
         float moveInput = Input.GetAxisRaw("Horizontal");
         UpdateFacing(moveInput);
@@ -96,10 +106,20 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        rb.velocity = new Vector2(moveInput * moveSpeed, rb.velocity.y);
+        float platformVelocityX = isGrounded && currentMovingPlatform != null
+            ? currentMovingPlatform.CurrentVelocity.x
+            : 0f;
+
+        rb.velocity = new Vector2(
+            moveInput * moveSpeed + platformVelocityX,
+            rb.velocity.y
+        );
     }
 
-    void UpdateFacing(float horizontalInput)
+    /// <summary>
+    /// Updates sprite orientation from horizontal movement input.
+    /// </summary>
+    private void UpdateFacing(float horizontalInput)
     {
         if (spriteRenderers == null || spriteRenderers.Length == 0)
         {
@@ -121,7 +141,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void SetSpriteFlip(bool flipX)
+    /// <summary>
+    /// Applies the requested horizontal flip to every player sprite.
+    /// </summary>
+    private void SetSpriteFlip(bool flipX)
     {
         foreach (var spriteRenderer in spriteRenderers)
         {
@@ -132,7 +155,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void HandleWallSlide()
+    /// <summary>
+    /// Limits falling speed while the player presses into a wall.
+    /// </summary>
+    private void HandleWallSlide()
     {
         float moveInput = Input.GetAxisRaw("Horizontal");
         bool pressingIntoLeftWall = isTouchingLeftWall && moveInput < 0f;
@@ -151,7 +177,10 @@ public class PlayerController : MonoBehaviour
         rb.velocity = new Vector2(rb.velocity.x, -wallSlideSpeed);
     }
 
-    void HandleJump()
+    /// <summary>
+    /// Performs buffered ground jumps and directional wall jumps.
+    /// </summary>
+    private void HandleJump()
     {
         if (jumpBufferCounter <= 0f)
         {
@@ -189,7 +218,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void CheckGrounded()
+    /// <summary>
+    /// Checks whether the ground probe overlaps the configured ground layer.
+    /// </summary>
+    private void CheckGrounded()
     {
         if (groundCheck == null)
         {
@@ -205,7 +237,10 @@ public class PlayerController : MonoBehaviour
         );
     }
 
-    void CheckWalls()
+    /// <summary>
+    /// Checks whether either wall probe is touching the wall layer.
+    /// </summary>
+    private void CheckWalls()
     {
         isTouchingLeftWall = leftWallCheck != null && Physics2D.OverlapCircle(
             leftWallCheck.position,
@@ -220,7 +255,10 @@ public class PlayerController : MonoBehaviour
         );
     }
 
-    void UpdateJumpBuffer()
+    /// <summary>
+    /// Records jump input briefly so near-ground presses are not lost.
+    /// </summary>
+    private void UpdateJumpBuffer()
     {
         if (Input.GetKeyDown(KeyCode.W))
         {
@@ -234,7 +272,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void UpdateWallCoyoteTime()
+    /// <summary>
+    /// Maintains short wall-jump grace periods after leaving a wall.
+    /// </summary>
+    private void UpdateWallCoyoteTime()
     {
         if (isTouchingLeftWall)
         {
@@ -255,7 +296,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void UpdateWallJumpControlLock()
+    /// <summary>
+    /// Counts down the temporary horizontal control lock after a wall jump.
+    /// </summary>
+    private void UpdateWallJumpControlLock()
     {
         if (wallJumpControlLockCounter > 0f)
         {
@@ -263,7 +307,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void UpdateAnimatorParameters()
+    /// <summary>
+    /// Sends movement and grounded values to the player Animator.
+    /// </summary>
+    private void UpdateAnimatorParameters()
     {
         if (animator == null || rb == null)
         {
@@ -275,16 +322,62 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("IsGrounded", isGrounded);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    /// <summary>
+    /// Handles lethal trigger contacts.
+    /// </summary>
+    private void OnTriggerEnter2D(Collider2D other)
     {
         TryKillPlayer(other);
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    /// <summary>
+    /// Handles lethal collision contacts.
+    /// </summary>
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         TryKillPlayer(collision.collider);
     }
 
+    /// <summary>
+    /// Tracks a moving platform while the player is standing on its upper surface.
+    /// </summary>
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        MovingPlatform2D platform =
+            collision.collider.GetComponentInParent<MovingPlatform2D>();
+
+        if (platform == null)
+        {
+            return;
+        }
+
+        for (int index = 0; index < collision.contactCount; index++)
+        {
+            if (collision.GetContact(index).normal.y > 0.5f)
+            {
+                currentMovingPlatform = platform;
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stops inheriting platform velocity after leaving the current platform.
+    /// </summary>
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        MovingPlatform2D platform =
+            collision.collider.GetComponentInParent<MovingPlatform2D>();
+
+        if (platform == currentMovingPlatform)
+        {
+            currentMovingPlatform = null;
+        }
+    }
+
+    /// <summary>
+    /// Kills the player when the contacted collider belongs to a trap.
+    /// </summary>
     private void TryKillPlayer(Collider2D other)
     {
         if (other != null &&
@@ -295,6 +388,9 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Clears temporary movement state after the player respawns.
+    /// </summary>
     public void ResetPlayerState()
     {
         jumpBufferCounter = 0f;
@@ -303,6 +399,7 @@ public class PlayerController : MonoBehaviour
         wallJumpControlLockCounter = 0f;
         isWallSliding = false;
         wallSide = 0;
+        currentMovingPlatform = null;
 
         if (animator != null)
         {
@@ -311,11 +408,17 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Enables or disables player-controlled movement input.
+    /// </summary>
     public void SetControlEnabled(bool enabled)
     {
         controlEnabled = enabled;
     }
 
+    /// <summary>
+    /// Requests the death animation when an Animator is available.
+    /// </summary>
     public void PlayDeathAnimation()
     {
         if (animator != null)
@@ -324,7 +427,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void OnDrawGizmosSelected()
+    /// <summary>
+    /// Draws ground and wall probes while the player is selected.
+    /// </summary>
+    private void OnDrawGizmosSelected()
     {
         if (groundCheck != null)
         {

@@ -8,13 +8,19 @@ public class WorldSwitcher : MonoBehaviour
 
     private bool isWorldA = true;
 
-    void Awake()
+    /// <summary>
+    /// Resolves world references and applies the initial world state.
+    /// </summary>
+    private void Awake()
     {
         FindWorldObjectsIfNeeded();
         ApplyWorld();
     }
 
-    void Update()
+    /// <summary>
+    /// Switches between worlds when the player presses Space.
+    /// </summary>
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -23,9 +29,12 @@ public class WorldSwitcher : MonoBehaviour
         }
     }
 
-    void ApplyWorld()
+    /// <summary>
+    /// Applies visibility for all configured WorldA and WorldB objects.
+    /// </summary>
+    private void ApplyWorld()
     {
-        foreach (var obj in worldAObjects)
+        foreach (GameObject obj in worldAObjects)
         {
             if (obj != null)
             {
@@ -33,7 +42,7 @@ public class WorldSwitcher : MonoBehaviour
             }
         }
 
-        foreach (var obj in worldBObjects)
+        foreach (GameObject obj in worldBObjects)
         {
             if (obj != null)
             {
@@ -42,6 +51,9 @@ public class WorldSwitcher : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Finds WorldA and WorldB scene objects when arrays are not assigned.
+    /// </summary>
     private void FindWorldObjectsIfNeeded()
     {
         if (!HasAssignedObject(worldAObjects))
@@ -65,6 +77,9 @@ public class WorldSwitcher : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks whether an object array contains at least one valid reference.
+    /// </summary>
     private static bool HasAssignedObject(GameObject[] objects)
     {
         if (objects == null)
@@ -83,6 +98,9 @@ public class WorldSwitcher : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Finds an object by name within every root of the active scene.
+    /// </summary>
     private static GameObject FindObjectInScene(string objectName)
     {
         Scene scene = SceneManager.GetActiveScene();
@@ -99,6 +117,9 @@ public class WorldSwitcher : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Recursively searches a Transform hierarchy for the requested object name.
+    /// </summary>
     private static Transform FindChildByName(Transform current, string objectName)
     {
         if (current.name == objectName)

@@ -7,8 +7,12 @@ public class PortalFinish : MonoBehaviour
 
     private bool showMessage;
     private float messageTimer;
+    private GUIStyle messageStyle;
 
-    void Update()
+    /// <summary>
+    /// Counts down the remaining time for the portal completion message.
+    /// </summary>
+    private void Update()
     {
         if (!showMessage)
         {
@@ -22,7 +26,10 @@ public class PortalFinish : MonoBehaviour
         }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    /// <summary>
+    /// Displays the completion message when the player enters the portal.
+    /// </summary>
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.GetComponentInParent<PlayerController>() == null)
         {
@@ -31,25 +38,40 @@ public class PortalFinish : MonoBehaviour
 
         showMessage = true;
         messageTimer = messageDuration;
-        Debug.Log(finishMessage);
     }
 
-    void OnGUI()
+    /// <summary>
+    /// Prepares the cached GUI style and draws the completion message when active.
+    /// </summary>
+    private void OnGUI()
     {
+        EnsureMessageStyle();
+
         if (!showMessage)
         {
             return;
         }
 
-        GUIStyle style = new GUIStyle(GUI.skin.label)
+        Rect rect = new Rect(0f, Screen.height * 0.35f, Screen.width, 80f);
+        GUI.Label(rect, finishMessage, messageStyle);
+    }
+
+    /// <summary>
+    /// Creates the portal message style once before the first interaction.
+    /// </summary>
+    private void EnsureMessageStyle()
+    {
+        if (messageStyle != null)
+        {
+            return;
+        }
+
+        messageStyle = new GUIStyle(GUI.skin.label)
         {
             alignment = TextAnchor.MiddleCenter,
             fontSize = 40
         };
 
-        style.normal.textColor = Color.white;
-
-        Rect rect = new Rect(0f, Screen.height * 0.35f, Screen.width, 80f);
-        GUI.Label(rect, finishMessage, style);
+        messageStyle.normal.textColor = Color.white;
     }
 }

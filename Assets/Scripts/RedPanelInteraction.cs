@@ -10,8 +10,10 @@ public class RedPanelInteraction : MonoBehaviour
     private int playersInRange;
     private bool hasBeenUsed;
 
-    // Keeps a used panel disabled when it is enabled again.
-    void OnEnable()
+    /// <summary>
+    /// Keeps a used panel disabled if its world is enabled again.
+    /// </summary>
+    private void OnEnable()
     {
         if (hasBeenUsed && deactivateThisPanel)
         {
@@ -19,8 +21,10 @@ public class RedPanelInteraction : MonoBehaviour
         }
     }
 
-    // Handles the interaction input while a player is in range.
-    void Update()
+    /// <summary>
+    /// Handles the interaction key while at least one player collider is in range.
+    /// </summary>
+    private void Update()
     {
         if (!hasBeenUsed &&
             playersInRange > 0 &&
@@ -30,7 +34,9 @@ public class RedPanelInteraction : MonoBehaviour
         }
     }
 
-    // Tracks players entering the panel interaction area.
+    /// <summary>
+    /// Tracks player colliders that enter the panel interaction area.
+    /// </summary>
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.GetComponentInParent<PlayerController>() != null)
@@ -39,7 +45,9 @@ public class RedPanelInteraction : MonoBehaviour
         }
     }
 
-    // Tracks players leaving the panel interaction area.
+    /// <summary>
+    /// Tracks player colliders that leave the panel interaction area.
+    /// </summary>
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other.GetComponentInParent<PlayerController>() != null)
@@ -48,24 +56,32 @@ public class RedPanelInteraction : MonoBehaviour
         }
     }
 
-    // Activates and deactivates the configured objects after interaction.
+    /// <summary>
+    /// Applies all configured activation changes and consumes the panel interaction.
+    /// </summary>
     private void UsePanel()
     {
         hasBeenUsed = true;
 
-        foreach (GameObject target in objectsToActivate)
+        if (objectsToActivate != null)
         {
-            if (target != null)
+            foreach (GameObject target in objectsToActivate)
             {
-                target.SetActive(true);
+                if (target != null)
+                {
+                    target.SetActive(true);
+                }
             }
         }
 
-        foreach (GameObject target in objectsToDeactivate)
+        if (objectsToDeactivate != null)
         {
-            if (target != null && target != gameObject)
+            foreach (GameObject target in objectsToDeactivate)
             {
-                target.SetActive(false);
+                if (target != null && target != gameObject)
+                {
+                    target.SetActive(false);
+                }
             }
         }
 
