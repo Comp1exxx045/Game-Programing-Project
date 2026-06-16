@@ -16,6 +16,7 @@ public class PauseMenuUI : MonoBehaviour
 
     [Header("Level State")]
     [SerializeField] private LevelCompletionUI levelCompletionUI;
+    [SerializeField] private ControlsGuideUI controlsGuideUI;
 
     [Header("Scenes")]
     [SerializeField] private string mainMenuSceneName = "MainMenu";
@@ -36,6 +37,7 @@ public class PauseMenuUI : MonoBehaviour
         }
 
         ResolveLevelCompletionUI();
+        ResolveControlsGuideUI();
         ValidateConfiguration();
     }
 
@@ -71,7 +73,7 @@ public class PauseMenuUI : MonoBehaviour
     /// </summary>
     public void PauseGame()
     {
-        if (isPaused || IsLevelComplete())
+        if (isPaused || IsLevelComplete() || IsControlsGuideOpen())
         {
             return;
         }
@@ -116,6 +118,11 @@ public class PauseMenuUI : MonoBehaviour
     /// </summary>
     public void TogglePause()
     {
+        if (IsControlsGuideOpen())
+        {
+            return;
+        }
+
         if (isPaused)
         {
             ResumeGame();
@@ -157,12 +164,35 @@ public class PauseMenuUI : MonoBehaviour
     }
 
     /// <summary>
+    /// Uses the assigned controls guide or finds the active scene's controls guide.
+    /// </summary>
+    /// <returns>True when a controls guide is available.</returns>
+    private bool ResolveControlsGuideUI()
+    {
+        if (controlsGuideUI == null)
+        {
+            controlsGuideUI = FindObjectOfType<ControlsGuideUI>(true);
+        }
+
+        return controlsGuideUI != null;
+    }
+
+    /// <summary>
     /// Checks whether the level completion flow has already started.
     /// </summary>
     /// <returns>True when the completion screen has been triggered.</returns>
     private bool IsLevelComplete()
     {
         return ResolveLevelCompletionUI() && levelCompletionUI.IsLevelComplete;
+    }
+
+    /// <summary>
+    /// Checks whether the controls guide is currently blocking gameplay.
+    /// </summary>
+    /// <returns>True when the controls guide is open.</returns>
+    private bool IsControlsGuideOpen()
+    {
+        return ResolveControlsGuideUI() && controlsGuideUI.IsOpen;
     }
 
     /// <summary>
