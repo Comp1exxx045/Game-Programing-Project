@@ -1,77 +1,65 @@
 using UnityEngine;
 
+/// <summary>
+/// Connects the existing portal trigger to the level completion interface.
+/// </summary>
 public class PortalFinish : MonoBehaviour
 {
-    public string finishMessage = "finish";
-    public float messageDuration = 2f;
+    [SerializeField] private LevelCompletionUI levelCompletionUI;
 
-    private bool showMessage;
-    private float messageTimer;
-    private GUIStyle messageStyle;
+    private bool hasTriggered;
+    private bool missingPlayerTagReported;
 
     /// <summary>
-    /// Counts down the remaining time for the portal completion message.
+    /// Resolves the level completion interface when the portal initializes.
     /// </summary>
-    private void Update()
+    private void Awake()
     {
-        if (!showMessage)
+        if (levelCompletionUI == null)
         {
-            return;
-        }
-
-        messageTimer -= Time.deltaTime;
-        if (messageTimer <= 0f)
-        {
-            showMessage = false;
+            levelCompletionUI = FindObjectOfType<LevelCompletionUI>(true);
         }
     }
 
     /// <summary>
-    /// Displays the completion message when the player enters the portal.
+    /// Opens the completion interface once when a player enters the portal.
     /// </summary>
+    /// <param name="other">The collider that entered the portal trigger.</param>
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.GetComponentInParent<PlayerController>() == null)
+        if (hasTriggered || other == null)
         {
             return;
         }
 
-        showMessage = true;
-        messageTimer = messageDuration;
-    }
-
-    /// <summary>
-    /// Prepares the cached GUI style and draws the completion message when active.
-    /// </summary>
-    private void OnGUI()
-    {
-        EnsureMessageStyle();
-
-        if (!showMessage)
+        PlayerController player = other.GetComponentInParent<PlayerController>();
+        if (player == null)
         {
             return;
         }
 
-        Rect rect = new Rect(0f, Screen.height * 0.35f, Screen.width, 80f);
-        GUI.Label(rect, finishMessage, messageStyle);
-    }
-
-    /// <summary>
-    /// Creates the portal message style once before the first interaction.
-    /// </summary>
-    private void EnsureMessageStyle()
-    {
-        if (messageStyle != null)
+        if (!player.CompareTag("Player") && !missingPlayerTagReported)
         {
+            Debug.LogWarning(
+                $"PortalFinish detected PlayerController on '{player.name}', but the object is not tagged Player. Completion will continue using the component reference.",
+                player);
+            missingPlayerTagReported = true;
+        }
+
+        if (levelCompletionUI == null)
+        {
+            levelCompletionUI = FindObjectOfType<LevelCompletionUI>(true);
+        }
+
+        if (levelCompletionUI == null)
+        {
+            Debug.LogError(
+                "PortalFinish cannot complete the level because no LevelCompletionUI was assigned or found.",
+                this);
             return;
         }
 
-        messageStyle = new GUIStyle(GUI.skin.label)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 40
-        };
-
-        messageStyle.normal.textColor = Color.white;
+        hasTriggered = true;
+        levelCompletionUI.ShowLevelComplete();
     }
 }
