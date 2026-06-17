@@ -7,6 +7,7 @@ public class WorldSwitcher : MonoBehaviour
     public GameObject[] worldBObjects;
 
     private bool isWorldA = true;
+    private PlayerController playerController;
 
     /// <summary>
     /// Resolves world references and applies the initial world state.
@@ -14,6 +15,7 @@ public class WorldSwitcher : MonoBehaviour
     private void Awake()
     {
         FindWorldObjectsIfNeeded();
+        ResolvePlayerController();
         ApplyWorld();
     }
 
@@ -26,6 +28,7 @@ public class WorldSwitcher : MonoBehaviour
         {
             isWorldA = !isWorldA;
             ApplyWorld();
+            PlayWorldSwitchSound();
         }
     }
 
@@ -74,6 +77,31 @@ public class WorldSwitcher : MonoBehaviour
                 "WorldSwitcher could not find both WorldA and WorldB in the current scene.",
                 this
             );
+        }
+    }
+
+    /// <summary>
+    /// Uses the active scene's player controller as the source for player switch audio.
+    /// </summary>
+    /// <returns>True when a player controller is available.</returns>
+    private bool ResolvePlayerController()
+    {
+        if (playerController == null)
+        {
+            playerController = FindObjectOfType<PlayerController>(true);
+        }
+
+        return playerController != null;
+    }
+
+    /// <summary>
+    /// Plays the player world-switch sound after the world state changes.
+    /// </summary>
+    private void PlayWorldSwitchSound()
+    {
+        if (ResolvePlayerController())
+        {
+            playerController.PlayWorldSwitchSound();
         }
     }
 
