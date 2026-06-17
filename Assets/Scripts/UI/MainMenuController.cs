@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
-    private const string FirstLevelScene = "Level01";
+    private const string FirstLevelScene = "IntroScene";
 
     [SerializeField] private AudioSource buttonClickAudioSource = null;
     [SerializeField] private AudioClip buttonClickSound = null;

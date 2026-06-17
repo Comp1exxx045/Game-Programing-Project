@@ -1,4 +1,7 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class RedPanelInteraction : MonoBehaviour
 {
@@ -8,6 +11,11 @@ public class RedPanelInteraction : MonoBehaviour
     [SerializeField] private bool deactivateThisPanel = true;
     [SerializeField] private AudioClip confirmationSound;
     [SerializeField] private float confirmationVolume = 1f;
+    [SerializeField] private AudioClip followUpSound;
+    [SerializeField] private float followUpVolume = 1f;
+    [SerializeField] private Image fadeImage;
+    [SerializeField, Range(0f, 1f)] private float fadeTargetAlpha = 1f;
+    [SerializeField] private string sceneToLoadAfterSequence;
 
     private int playersInRange;
     private bool hasBeenUsed;
@@ -110,9 +118,125 @@ public class RedPanelInteraction : MonoBehaviour
         AudioSource source = soundObject.AddComponent<AudioSource>();
         source.playOnAwake = false;
         source.spatialBlend = 0f;
-        source.volume = confirmationVolume;
-        source.PlayOneShot(confirmationSound);
+        if (followUpSound == null)
+        {
+            source.volume = confirmationVolume;
+            source.PlayOneShot(confirmationSound);
+            Destroy(soundObject, confirmationSound.length);
+            return;
+        }
 
-        Destroy(soundObject, confirmationSound.length);
+        PanelSoundSequence sequence = soundObject.AddComponent<PanelSoundSequence>();
+        sequence.Play(
+            source,
+            confirmationSound,
+            confirmationVolume,
+            followUpSound,
+            followUpVolume,
+            fadeImage,
+            fadeTargetAlpha,
+            sceneToLoadAfterSequence);
+    }
+
+    private sealed class PanelSoundSequence : MonoBehaviour
+    {
+        public void Play(
+            AudioSource source,
+            AudioClip firstClip,
+            float firstVolume,
+            AudioClip secondClip,
+            float secondVolume,
+            Image fadeImage,
+            float fadeTargetAlpha,
+            string sceneToLoadAfterSequence)
+        {
+            StartCoroutine(PlaySequence(
+                source,
+                firstClip,
+                firstVolume,
+                secondClip,
+                secondVolume,
+                fadeImage,
+                fadeTargetAlpha,
+                sceneToLoadAfterSequence));
+        }
+
+        private IEnumerator PlaySequence(
+            AudioSource source,
+            AudioClip firstClip,
+            float firstVolume,
+            AudioClip secondClip,
+            float secondVolume,
+            Image fadeImage,
+            float fadeTargetAlpha,
+            string sceneToLoadAfterSequence)
+        {
+            source.volume = firstVolume;
+            source.clip = firstClip;
+            source.Play();
+
+            yield return new WaitForSeconds(firstClip.length);
+
+            source.volume = secondVolume;
+            source.clip = secondClip;
+            source.Play();
+
+            yield return FadeWhileClipPlays(fadeImage, fadeTargetAlpha, secondClip.length);
+
+            LoadSceneIfConfigured(sceneToLoadAfterSequence);
+
+            Destroy(gameObject);
+        }
+
+        private void LoadSceneIfConfigured(string sceneName)
+        {
+            if (string.IsNullOrWhiteSpace(sceneName))
+            {
+                return;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogError(
+                    $"RedPanelInteraction cannot load scene '{sceneName}'. Add it to Scenes In Build or Build Profiles and verify the configured name.",
+                    this);
+                return;
+            }
+
+            SceneManager.LoadScene(sceneName);
+        }
+
+        private static IEnumerator FadeWhileClipPlays(
+            Image fadeImage,
+            float targetAlpha,
+            float duration)
+        {
+            if (fadeImage == null)
+            {
+                yield return new WaitForSeconds(duration);
+                yield break;
+            }
+
+            Color startColor = fadeImage.color;
+            Color targetColor = startColor;
+            targetColor.a = Mathf.Clamp01(targetAlpha);
+
+            if (duration <= 0f)
+            {
+                fadeImage.color = targetColor;
+                yield break;
+            }
+
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                fadeImage.color = Color.Lerp(startColor, targetColor, Mathf.Clamp01(elapsed / duration));
+                yield return null;
+            }
+
+            fadeImage.color = targetColor;
+        }
     }
 }
