@@ -28,6 +28,14 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.2f;
     public LayerMask groundLayer;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip jump;
+    [SerializeField] private AudioClip respawn;
+    [SerializeField] private AudioClip worldSwitch;
+    [SerializeField] private float jumpStartTime = 0.04f;
+    [SerializeField, Range(0f, 1f)] private float jumpVolume = 0.5f;
+
     private Rigidbody2D rb;
     private Animator animator;
     private SpriteRenderer[] spriteRenderers;
@@ -42,6 +50,7 @@ public class PlayerController : MonoBehaviour
     private float wallJumpControlLockCounter;
     private bool controlEnabled = true;
     private MovingPlatform2D currentMovingPlatform;
+    private AudioSource effectAudioSource;
 
     /// <summary>
     /// Caches player components and applies the configured physics settings.
@@ -49,6 +58,13 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+
+        CreateEffectAudioSource();
 
         Animator[] animators = GetComponentsInChildren<Animator>();
         foreach (Animator childAnimator in animators)
@@ -208,6 +224,7 @@ public class PlayerController : MonoBehaviour
             wallJumpControlLockCounter = wallJumpControlLockTime;
             jumpBufferCounter = 0f;
             isWallSliding = false;
+            PlayJumpSound();
             return;
         }
 
@@ -215,7 +232,76 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpBufferCounter = 0f;
+            PlayJumpSound();
         }
+    }
+
+    /// <summary>
+    /// Plays the jump sound from a small offset to skip leading silence.
+    /// </summary>
+    private void PlayJumpSound()
+    {
+        PlayEffectSound(jump, jumpStartTime, jumpVolume);
+    }
+
+    /// <summary>
+    /// Plays the respawn sound when the player has been restored to the checkpoint.
+    /// </summary>
+    public void PlayRespawnSound()
+    {
+        PlayEffectSound(respawn, 0f);
+    }
+
+    /// <summary>
+    /// Plays the world-switch sound when the scene swaps between world states.
+    /// </summary>
+    public void PlayWorldSwitchSound()
+    {
+        PlayEffectSound(worldSwitch, 0f);
+    }
+
+    /// <summary>
+    /// Plays a player effect sound from the requested offset.
+    /// </summary>
+    /// <param name="clip">The sound effect to play.</param>
+    /// <param name="startTime">The time offset used to skip leading silence.</param>
+    private void PlayEffectSound(AudioClip clip, float startTime, float volume = -1f)
+    {
+        AudioSource source = effectAudioSource != null ? effectAudioSource : audioSource;
+        if (source == null || clip == null)
+        {
+            return;
+        }
+
+        source.clip = clip;
+        source.time = Mathf.Clamp(startTime, 0f, Mathf.Max(0f, clip.length - 0.01f));
+        source.loop = false;
+        source.volume = volume >= 0f
+            ? Mathf.Clamp01(volume)
+            : audioSource != null ? audioSource.volume : source.volume;
+        source.Play();
+    }
+
+    /// <summary>
+    /// Creates a separate runtime audio source for one-shot player effects.
+    /// </summary>
+    private void CreateEffectAudioSource()
+    {
+        if (audioSource == null)
+        {
+            return;
+        }
+
+        effectAudioSource = gameObject.AddComponent<AudioSource>();
+        effectAudioSource.outputAudioMixerGroup = audioSource.outputAudioMixerGroup;
+        effectAudioSource.playOnAwake = false;
+        effectAudioSource.volume = audioSource.volume;
+        effectAudioSource.pitch = audioSource.pitch;
+        effectAudioSource.spatialBlend = audioSource.spatialBlend;
+        effectAudioSource.priority = audioSource.priority;
+        effectAudioSource.dopplerLevel = audioSource.dopplerLevel;
+        effectAudioSource.minDistance = audioSource.minDistance;
+        effectAudioSource.maxDistance = audioSource.maxDistance;
     }
 
     /// <summary>
@@ -406,6 +492,8 @@ public class PlayerController : MonoBehaviour
             animator.ResetTrigger("Die");
             animator.Play("Idle", 0, 0f);
         }
+
+        PlayRespawnSound();
     }
 
     /// <summary>

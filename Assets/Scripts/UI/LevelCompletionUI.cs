@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -21,7 +22,13 @@ public class LevelCompletionUI : MonoBehaviour
     [SerializeField] private string nextSceneName;
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource buttonClickAudioSource = null;
+    [SerializeField] private AudioClip buttonClickSound = null;
+    [SerializeField] private float buttonClickDelay = 0.12f;
+
     private bool isLevelComplete;
+    private bool isLoadingScene;
     private bool listenersRegistered;
 
     /// <summary>
@@ -43,6 +50,7 @@ public class LevelCompletionUI : MonoBehaviour
         }
 
         ResolvePlayerController();
+        ResolveButtonClickAudioSource();
         RegisterButtonListeners();
         ValidateConfiguration();
     }
@@ -147,9 +155,9 @@ public class LevelCompletionUI : MonoBehaviour
             return;
         }
 
-        RegisterButtonListener(nextLevelButton, LoadNextLevel, "Next Level Button");
-        RegisterButtonListener(restartButton, RestartLevel, "Restart Button");
-        RegisterButtonListener(mainMenuButton, ReturnToMainMenu, "Main Menu Button");
+        RegisterButtonListener(nextLevelButton, OnNextLevelButtonClicked, "Next Level Button");
+        RegisterButtonListener(restartButton, OnRestartButtonClicked, "Restart Button");
+        RegisterButtonListener(mainMenuButton, OnMainMenuButtonClicked, "Main Menu Button");
         listenersRegistered = true;
     }
 
@@ -165,17 +173,17 @@ public class LevelCompletionUI : MonoBehaviour
 
         if (nextLevelButton != null)
         {
-            nextLevelButton.onClick.RemoveListener(LoadNextLevel);
+            nextLevelButton.onClick.RemoveListener(OnNextLevelButtonClicked);
         }
 
         if (restartButton != null)
         {
-            restartButton.onClick.RemoveListener(RestartLevel);
+            restartButton.onClick.RemoveListener(OnRestartButtonClicked);
         }
 
         if (mainMenuButton != null)
         {
-            mainMenuButton.onClick.RemoveListener(ReturnToMainMenu);
+            mainMenuButton.onClick.RemoveListener(OnMainMenuButtonClicked);
         }
 
         listenersRegistered = false;
@@ -205,6 +213,30 @@ public class LevelCompletionUI : MonoBehaviour
     }
 
     /// <summary>
+    /// Plays the click sound and starts loading the configured next level.
+    /// </summary>
+    private void OnNextLevelButtonClicked()
+    {
+        LoadNextLevel();
+    }
+
+    /// <summary>
+    /// Plays the click sound and starts restarting the current level.
+    /// </summary>
+    private void OnRestartButtonClicked()
+    {
+        RestartLevel();
+    }
+
+    /// <summary>
+    /// Plays the click sound and starts returning to the main menu.
+    /// </summary>
+    private void OnMainMenuButtonClicked()
+    {
+        ReturnToMainMenu();
+    }
+
+    /// <summary>
     /// Selects the next-level button for keyboard or controller navigation.
     /// </summary>
     private void SelectNextLevelButton()
@@ -225,6 +257,11 @@ public class LevelCompletionUI : MonoBehaviour
     /// <param name="fieldName">The configuration field represented by the scene name.</param>
     private void LoadConfiguredScene(string sceneName, string fieldName)
     {
+        if (isLoadingScene)
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Debug.LogError(
@@ -241,8 +278,61 @@ public class LevelCompletionUI : MonoBehaviour
             return;
         }
 
+        StartCoroutine(LoadConfiguredSceneAfterButtonClick(sceneName));
+    }
+
+    /// <summary>
+    /// Plays the button click sound, restores time, and loads the requested scene.
+    /// </summary>
+    /// <param name="sceneName">The scene name to load.</param>
+    private IEnumerator LoadConfiguredSceneAfterButtonClick(string sceneName)
+    {
+        isLoadingScene = true;
+        PlayButtonClickSound();
+
+        yield return new WaitForSecondsRealtime(GetButtonClickDelay());
+
         Time.timeScale = 1f;
         SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
+    /// Uses the assigned click audio source or finds one on the same canvas.
+    /// </summary>
+    private void ResolveButtonClickAudioSource()
+    {
+        if (buttonClickAudioSource == null)
+        {
+            buttonClickAudioSource = GetComponent<AudioSource>();
+        }
+    }
+
+    /// <summary>
+    /// Plays the configured completion menu button click sound once.
+    /// </summary>
+    private void PlayButtonClickSound()
+    {
+        ResolveButtonClickAudioSource();
+
+        if (buttonClickAudioSource == null || buttonClickSound == null)
+        {
+            return;
+        }
+
+        buttonClickAudioSource.PlayOneShot(buttonClickSound);
+    }
+
+    /// <summary>
+    /// Returns the realtime delay used to let click sounds finish before scene loading.
+    /// </summary>
+    private float GetButtonClickDelay()
+    {
+        if (buttonClickSound == null)
+        {
+            return 0f;
+        }
+
+        return Mathf.Max(0f, Mathf.Min(buttonClickDelay, buttonClickSound.length));
     }
 
     /// <summary>

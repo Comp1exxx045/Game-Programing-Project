@@ -6,6 +6,8 @@ public class RedPanelInteraction : MonoBehaviour
     [SerializeField] private GameObject[] objectsToActivate;
     [SerializeField] private GameObject[] objectsToDeactivate;
     [SerializeField] private bool deactivateThisPanel = true;
+    [SerializeField] private AudioClip confirmationSound;
+    [SerializeField] private float confirmationVolume = 1f;
 
     private int playersInRange;
     private bool hasBeenUsed;
@@ -62,6 +64,7 @@ public class RedPanelInteraction : MonoBehaviour
     private void UsePanel()
     {
         hasBeenUsed = true;
+        PlayConfirmationSound();
 
         if (objectsToActivate != null)
         {
@@ -89,5 +92,27 @@ public class RedPanelInteraction : MonoBehaviour
         {
             gameObject.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// Plays the confirmation sound from a temporary source so deactivating the panel does not stop it.
+    /// </summary>
+    private void PlayConfirmationSound()
+    {
+        if (confirmationSound == null)
+        {
+            return;
+        }
+
+        GameObject soundObject = new GameObject("Panel Confirmation Sound");
+        soundObject.transform.position = transform.position;
+
+        AudioSource source = soundObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.spatialBlend = 0f;
+        source.volume = confirmationVolume;
+        source.PlayOneShot(confirmationSound);
+
+        Destroy(soundObject, confirmationSound.length);
     }
 }

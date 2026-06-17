@@ -14,6 +14,11 @@ public class TimedBarrier : MonoBehaviour
     [SerializeField, Min(0)] private int passableStartFrame = 13;
     [SerializeField, Min(0)] private int finalFrame = 17;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource laserAudioSource;
+    [SerializeField] private AudioClip laserLoop;
+    [SerializeField] private float laserVolume = 1f;
+
     private static readonly int ActiveStateHash = Animator.StringToHash("Barrier");
     private static readonly int DeactivateStateHash = Animator.StringToHash("BarrierDeact");
 
@@ -28,6 +33,7 @@ public class TimedBarrier : MonoBehaviour
     {
         barrierAnimator = GetComponent<Animator>();
         barrierCollider = GetComponent<Collider2D>();
+        ConfigureLaserAudio();
     }
 
     /// <summary>
@@ -35,6 +41,7 @@ public class TimedBarrier : MonoBehaviour
     /// </summary>
     private void OnEnable()
     {
+        ConfigureLaserAudio();
         barrierCycle = StartCoroutine(RunBarrierCycle());
     }
 
@@ -45,6 +52,7 @@ public class TimedBarrier : MonoBehaviour
     {
         SetColliderEnabled(true);
         PlayState(ActiveStateHash);
+        StartLaserAudio();
 
         while (true)
         {
@@ -53,6 +61,7 @@ public class TimedBarrier : MonoBehaviour
             PlayState(DeactivateStateHash);
             yield return new WaitForSeconds(passableStartFrame / animationFrameRate);
 
+            StopLaserAudio();
             SetColliderEnabled(false);
 
             float remainingAnimationTime =
@@ -64,6 +73,7 @@ public class TimedBarrier : MonoBehaviour
 
             SetColliderEnabled(true);
             PlayState(ActiveStateHash);
+            StartLaserAudio();
         }
     }
 
@@ -84,6 +94,7 @@ public class TimedBarrier : MonoBehaviour
         }
 
         SetColliderEnabled(true);
+        StopLaserAudio();
     }
 
     /// <summary>
@@ -109,5 +120,59 @@ public class TimedBarrier : MonoBehaviour
 
         barrierAnimator.speed = 1f;
         barrierAnimator.Play(stateHash, 0, 0f);
+    }
+
+    /// <summary>
+    /// Prepares the looping laser audio source when a laser clip is assigned.
+    /// </summary>
+    private void ConfigureLaserAudio()
+    {
+        if (laserLoop == null)
+        {
+            return;
+        }
+
+        if (laserAudioSource == null)
+        {
+            laserAudioSource = GetComponent<AudioSource>();
+        }
+
+        if (laserAudioSource == null)
+        {
+            laserAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        laserAudioSource.clip = laserLoop;
+        laserAudioSource.loop = true;
+        laserAudioSource.playOnAwake = false;
+        laserAudioSource.volume = laserVolume;
+        laserAudioSource.spatialBlend = 0f;
+    }
+
+    /// <summary>
+    /// Starts the laser loop while the barrier animation is visible and blocking.
+    /// </summary>
+    private void StartLaserAudio()
+    {
+        if (laserAudioSource == null || laserLoop == null)
+        {
+            return;
+        }
+
+        if (!laserAudioSource.isPlaying)
+        {
+            laserAudioSource.Play();
+        }
+    }
+
+    /// <summary>
+    /// Stops the laser loop while the barrier is visually open or disabled.
+    /// </summary>
+    private void StopLaserAudio()
+    {
+        if (laserAudioSource != null && laserAudioSource.isPlaying)
+        {
+            laserAudioSource.Stop();
+        }
     }
 }

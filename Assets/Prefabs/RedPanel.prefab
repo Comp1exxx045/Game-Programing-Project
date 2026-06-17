@@ -171,3 +171,5 @@ MonoBehaviour:
   objectsToDeactivate:
   - {fileID: 0}
   deactivateThisPanel: 1
+  confirmationSound: {fileID: 8300000, guid: 67c475c512c2b1842a7ed80eb98d0b17, type: 3}
+  confirmationVolume: 1

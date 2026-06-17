@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -21,7 +22,13 @@ public class PauseMenuUI : MonoBehaviour
     [Header("Scenes")]
     [SerializeField] private string mainMenuSceneName = "MainMenu";
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource buttonClickAudioSource = null;
+    [SerializeField] private AudioClip buttonClickSound = null;
+    [SerializeField] private float buttonClickDelay = 0.12f;
+
     private bool isPaused;
+    private bool isLoadingScene;
     private bool listenersRegistered;
 
     /// <summary>
@@ -38,6 +45,7 @@ public class PauseMenuUI : MonoBehaviour
 
         ResolveLevelCompletionUI();
         ResolveControlsGuideUI();
+        ResolveButtonClickAudioSource();
         ValidateConfiguration();
     }
 
@@ -205,9 +213,9 @@ public class PauseMenuUI : MonoBehaviour
             return;
         }
 
-        RegisterButtonListener(resumeButton, ResumeGame, "Resume Button");
-        RegisterButtonListener(restartButton, RestartLevel, "Restart Button");
-        RegisterButtonListener(mainMenuButton, ReturnToMainMenu, "Main Menu Button");
+        RegisterButtonListener(resumeButton, OnResumeButtonClicked, "Resume Button");
+        RegisterButtonListener(restartButton, OnRestartButtonClicked, "Restart Button");
+        RegisterButtonListener(mainMenuButton, OnMainMenuButtonClicked, "Main Menu Button");
         listenersRegistered = true;
     }
 
@@ -223,17 +231,17 @@ public class PauseMenuUI : MonoBehaviour
 
         if (resumeButton != null)
         {
-            resumeButton.onClick.RemoveListener(ResumeGame);
+            resumeButton.onClick.RemoveListener(OnResumeButtonClicked);
         }
 
         if (restartButton != null)
         {
-            restartButton.onClick.RemoveListener(RestartLevel);
+            restartButton.onClick.RemoveListener(OnRestartButtonClicked);
         }
 
         if (mainMenuButton != null)
         {
-            mainMenuButton.onClick.RemoveListener(ReturnToMainMenu);
+            mainMenuButton.onClick.RemoveListener(OnMainMenuButtonClicked);
         }
 
         listenersRegistered = false;
@@ -260,6 +268,31 @@ public class PauseMenuUI : MonoBehaviour
 
         button.onClick.RemoveListener(action);
         button.onClick.AddListener(action);
+    }
+
+    /// <summary>
+    /// Plays the click sound and resumes gameplay from the pause menu.
+    /// </summary>
+    private void OnResumeButtonClicked()
+    {
+        PlayButtonClickSound();
+        ResumeGame();
+    }
+
+    /// <summary>
+    /// Plays the click sound and starts the current level restart flow.
+    /// </summary>
+    private void OnRestartButtonClicked()
+    {
+        RestartLevel();
+    }
+
+    /// <summary>
+    /// Plays the click sound and starts the main menu return flow.
+    /// </summary>
+    private void OnMainMenuButtonClicked()
+    {
+        ReturnToMainMenu();
     }
 
     /// <summary>
@@ -297,6 +330,11 @@ public class PauseMenuUI : MonoBehaviour
     /// <param name="fieldName">The configuration field represented by the scene name.</param>
     private void LoadScene(string sceneName, string fieldName)
     {
+        if (isLoadingScene)
+        {
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Debug.LogError(
@@ -313,9 +351,62 @@ public class PauseMenuUI : MonoBehaviour
             return;
         }
 
+        StartCoroutine(LoadSceneAfterButtonClick(sceneName));
+    }
+
+    /// <summary>
+    /// Plays the button click sound, restores time, and loads the requested scene.
+    /// </summary>
+    /// <param name="sceneName">The scene name to load.</param>
+    private IEnumerator LoadSceneAfterButtonClick(string sceneName)
+    {
+        isLoadingScene = true;
+        PlayButtonClickSound();
+
+        yield return new WaitForSecondsRealtime(GetButtonClickDelay());
+
         isPaused = false;
         Time.timeScale = 1f;
         SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
+    /// Uses the assigned click audio source or finds one on the same canvas.
+    /// </summary>
+    private void ResolveButtonClickAudioSource()
+    {
+        if (buttonClickAudioSource == null)
+        {
+            buttonClickAudioSource = GetComponent<AudioSource>();
+        }
+    }
+
+    /// <summary>
+    /// Plays the configured pause menu button click sound once.
+    /// </summary>
+    private void PlayButtonClickSound()
+    {
+        ResolveButtonClickAudioSource();
+
+        if (buttonClickAudioSource == null || buttonClickSound == null)
+        {
+            return;
+        }
+
+        buttonClickAudioSource.PlayOneShot(buttonClickSound);
+    }
+
+    /// <summary>
+    /// Returns the realtime delay used to let click sounds finish before scene loading.
+    /// </summary>
+    private float GetButtonClickDelay()
+    {
+        if (buttonClickSound == null)
+        {
+            return 0f;
+        }
+
+        return Mathf.Max(0f, Mathf.Min(buttonClickDelay, buttonClickSound.length));
     }
 
     /// <summary>
