@@ -1,6 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Cycles an animated barrier between blocking and passable states with optional laser audio.
+/// </summary>
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Collider2D))]
 public class TimedBarrier : MonoBehaviour

@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Switches between WorldA and WorldB object sets and plays feedback when the world changes.
+/// </summary>
 public class WorldSwitcher : MonoBehaviour
 {
     public GameObject[] worldAObjects;

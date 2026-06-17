@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Moves a Rigidbody2D object up and down with a sinusoidal vertical motion.
+/// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class VerticalMover : MonoBehaviour
 {
@@ -13,13 +16,19 @@ public class VerticalMover : MonoBehaviour
     private Vector2 startPosition;
     private float elapsedTime;
 
-    void Awake()
+    /// <summary>
+    /// Caches the Rigidbody2D and records the starting position.
+    /// </summary>
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         startPosition = rb.position;
     }
 
-    void FixedUpdate()
+    /// <summary>
+    /// Moves the object vertically during the physics update.
+    /// </summary>
+    private void FixedUpdate()
     {
         if (moveDistance <= 0f || moveSpeed <= 0f)
         {

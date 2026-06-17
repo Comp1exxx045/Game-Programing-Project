@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Moves a Rigidbody2D platform back and forth between two points and exposes its velocity.
+/// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 public class MovingPlatform2D : MonoBehaviour
 {

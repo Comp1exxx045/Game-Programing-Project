@@ -3,6 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Plays the opening story sequence and loads the configured scene when it finishes.
+/// </summary>
 public class IntroSequenceController : MonoBehaviour
 {
     [SerializeField] private TMP_Text storyText;
@@ -27,6 +30,9 @@ public class IntroSequenceController : MonoBehaviour
     private bool isDisplayingMessage;
     private bool skipCurrentDisplay;
 
+    /// <summary>
+    /// Validates references and starts the intro sequence once.
+    /// </summary>
     private void Start()
     {
         if (hasStarted)
@@ -45,11 +51,17 @@ public class IntroSequenceController : MonoBehaviour
         StartCoroutine(PlaySequence());
     }
 
+    /// <summary>
+    /// Applies editable text settings while values change in the Inspector.
+    /// </summary>
     private void OnValidate()
     {
         ApplyTextSettings();
     }
 
+    /// <summary>
+    /// Handles skip input for the currently displayed message.
+    /// </summary>
     private void Update()
     {
         if (!allowSkip || !isDisplayingMessage || skipCurrentDisplay)
@@ -65,6 +77,9 @@ public class IntroSequenceController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Displays each configured message with fade-in, hold, fade-out, and interval timing.
+    /// </summary>
     private IEnumerator PlaySequence()
     {
         foreach (string message in messages)
@@ -81,6 +96,9 @@ public class IntroSequenceController : MonoBehaviour
         LoadNextScene();
     }
 
+    /// <summary>
+    /// Holds the current message on screen until its duration ends or skip is pressed.
+    /// </summary>
     private IEnumerator DisplayCurrentMessage()
     {
         isDisplayingMessage = true;
@@ -97,6 +115,11 @@ public class IntroSequenceController : MonoBehaviour
         isDisplayingMessage = false;
     }
 
+    /// <summary>
+    /// Smoothly fades the story text between two alpha values using unscaled time.
+    /// </summary>
+    /// <param name="fromAlpha">The starting text alpha.</param>
+    /// <param name="toAlpha">The target text alpha.</param>
     private IEnumerator FadeText(float fromAlpha, float toAlpha)
     {
         float duration = Mathf.Max(0f, fadeDuration);
@@ -121,6 +144,9 @@ public class IntroSequenceController : MonoBehaviour
         textCanvasGroup.alpha = toAlpha;
     }
 
+    /// <summary>
+    /// Loads the configured scene after validating that it is included in the build.
+    /// </summary>
     private void LoadNextScene()
     {
         if (string.IsNullOrWhiteSpace(nextSceneName))
@@ -140,6 +166,10 @@ public class IntroSequenceController : MonoBehaviour
         SceneManager.LoadScene(nextSceneName);
     }
 
+    /// <summary>
+    /// Checks required references and message data before playback starts.
+    /// </summary>
+    /// <returns>True when the intro can be played safely.</returns>
     private bool ValidateConfiguration()
     {
         bool isValid = true;
@@ -165,6 +195,9 @@ public class IntroSequenceController : MonoBehaviour
         return isValid;
     }
 
+    /// <summary>
+    /// Applies the Inspector-controlled font size to the TextMeshPro component.
+    /// </summary>
     private void ApplyTextSettings()
     {
         if (storyText != null)

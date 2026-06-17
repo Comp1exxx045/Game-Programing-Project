@@ -1,6 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// Coordinates player death, respawn timing, and respawn position management.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
@@ -16,7 +19,10 @@ public class GameManager : MonoBehaviour
     private bool respawnPositionInitialized;
     private RigidbodyConstraints2D savedPlayerConstraints;
 
-    void Awake()
+    /// <summary>
+    /// Establishes the singleton instance and resolves the player reference.
+    /// </summary>
+    private void Awake()
     {
         if (Instance != null && Instance != this)
         {
@@ -28,7 +34,10 @@ public class GameManager : MonoBehaviour
         FindPlayerIfNeeded();
     }
 
-    void OnDestroy()
+    /// <summary>
+    /// Clears the singleton reference when this manager is destroyed.
+    /// </summary>
+    private void OnDestroy()
     {
         if (Instance == this)
         {
@@ -36,6 +45,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Starts the death and respawn flow if the player is currently alive.
+    /// </summary>
     public void KillPlayer()
     {
         if (isDead || isRespawning)
@@ -52,6 +64,9 @@ public class GameManager : MonoBehaviour
         StartCoroutine(DeathAndRespawnRoutine());
     }
 
+    /// <summary>
+    /// Locks player control, plays the death animation, and waits before respawning.
+    /// </summary>
     private IEnumerator DeathAndRespawnRoutine()
     {
         isDead = true;
@@ -85,6 +100,9 @@ public class GameManager : MonoBehaviour
         yield return StartCoroutine(RespawnPlayer());
     }
 
+    /// <summary>
+    /// Moves the player back to the respawn position and restores movement control.
+    /// </summary>
     private IEnumerator RespawnPlayer()
     {
         isRespawning = true;
@@ -115,6 +133,10 @@ public class GameManager : MonoBehaviour
         isDead = false;
     }
 
+    /// <summary>
+    /// Resolves the player reference and initializes the respawn point when configured.
+    /// </summary>
+    /// <returns>True when a player transform is available.</returns>
     private bool FindPlayerIfNeeded()
     {
         if (player == null)

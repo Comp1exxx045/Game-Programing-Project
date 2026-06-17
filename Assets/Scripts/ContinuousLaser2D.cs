@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Casts a continuous 2D laser beam, updates its visual length, and kills the player on contact.
+/// </summary>
 public class ContinuousLaser2D : MonoBehaviour
 {
     private const string BeamVisualName = "BeamVisual";
@@ -19,19 +22,28 @@ public class ContinuousLaser2D : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
 
-    void Awake()
+    /// <summary>
+    /// Creates the beam visual and configures rendering before the first physics update.
+    /// </summary>
+    private void Awake()
     {
         CreateBeamVisualIfNeeded();
         ConfigureSpriteRenderer();
         DisableOldLineRenderer();
     }
 
-    void FixedUpdate()
+    /// <summary>
+    /// Updates the laser collision and visual beam using the physics timestep.
+    /// </summary>
+    private void FixedUpdate()
     {
         UpdateLaser();
     }
 
-    void OnValidate()
+    /// <summary>
+    /// Keeps edit-time laser settings valid and refreshes the beam preview components.
+    /// </summary>
+    private void OnValidate()
     {
         if (localDirection.sqrMagnitude < 0.001f)
         {
@@ -48,6 +60,9 @@ public class ContinuousLaser2D : MonoBehaviour
         DisableOldLineRenderer();
     }
 
+    /// <summary>
+    /// Casts the laser, finds the closest blocking hit, and updates the visible beam.
+    /// </summary>
     private void UpdateLaser()
     {
         Vector2 origin = firePoint != null ? firePoint.position : transform.position;
@@ -98,6 +113,11 @@ public class ContinuousLaser2D : MonoBehaviour
         UpdateBeamVisual(origin, endPoint, direction);
     }
 
+    /// <summary>
+    /// Checks whether a hit belongs to this laser object or one of its child visuals.
+    /// </summary>
+    /// <param name="hitTransform">The transform hit by the laser cast.</param>
+    /// <returns>True when the hit should be ignored as part of this laser.</returns>
     private bool IsPartOfLaserObject(Transform hitTransform)
     {
         return hitTransform == transform ||
@@ -105,6 +125,12 @@ public class ContinuousLaser2D : MonoBehaviour
                transform.IsChildOf(hitTransform);
     }
 
+    /// <summary>
+    /// Scales, rotates, and positions the SpriteRenderer between the laser endpoints.
+    /// </summary>
+    /// <param name="origin">The world-space start point of the laser.</param>
+    /// <param name="endPoint">The world-space end point of the laser.</param>
+    /// <param name="direction">The normalized world-space laser direction.</param>
     private void UpdateBeamVisual(Vector2 origin, Vector2 endPoint, Vector2 direction)
     {
         if (spriteRenderer == null || spriteRenderer.sprite == null)
@@ -143,6 +169,9 @@ public class ContinuousLaser2D : MonoBehaviour
         );
     }
 
+    /// <summary>
+    /// Creates a child SpriteRenderer for the laser beam when one is not already present.
+    /// </summary>
     private void CreateBeamVisualIfNeeded()
     {
         Transform existingVisual = transform.Find(BeamVisualName);
@@ -161,6 +190,9 @@ public class ContinuousLaser2D : MonoBehaviour
         spriteRenderer = beamVisual.AddComponent<SpriteRenderer>();
     }
 
+    /// <summary>
+    /// Applies the configured sprite, color, and sorting order to the beam renderer.
+    /// </summary>
     private void ConfigureSpriteRenderer()
     {
         if (spriteRenderer == null)
@@ -177,6 +209,9 @@ public class ContinuousLaser2D : MonoBehaviour
         spriteRenderer.sortingOrder = sortingOrder;
     }
 
+    /// <summary>
+    /// Disables any legacy LineRenderer so only the sprite beam is visible.
+    /// </summary>
     private void DisableOldLineRenderer()
     {
         LineRenderer oldLineRenderer = GetComponent<LineRenderer>();
@@ -186,7 +221,10 @@ public class ContinuousLaser2D : MonoBehaviour
         }
     }
 
-    void OnDrawGizmosSelected()
+    /// <summary>
+    /// Draws the configured laser path while the object is selected in the editor.
+    /// </summary>
+    private void OnDrawGizmosSelected()
     {
         Vector2 origin = firePoint != null ? firePoint.position : transform.position;
         Vector2 direction = transform.TransformDirection(localDirection.normalized);

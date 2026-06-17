@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// Moves a saw trap horizontally between two world-space X positions.
+/// </summary>
 public class SawHorizontalMover : MonoBehaviour
 {
     [Header("Horizontal Movement")]

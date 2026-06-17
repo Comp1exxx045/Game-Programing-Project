@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// Handles player movement, wall jumping, animations, audio feedback, and trap damage.
+/// </summary>
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]

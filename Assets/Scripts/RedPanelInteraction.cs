@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+/// <summary>
+/// Handles red panel interaction, configured object activation, audio feedback, and optional scene transition.
+/// </summary>
 public class RedPanelInteraction : MonoBehaviour
 {
     [SerializeField] private KeyCode interactionKey = KeyCode.E;
@@ -138,8 +141,22 @@ public class RedPanelInteraction : MonoBehaviour
             sceneToLoadAfterSequence);
     }
 
+    /// <summary>
+    /// Plays a two-step panel audio sequence and coordinates the optional screen fade.
+    /// </summary>
     private sealed class PanelSoundSequence : MonoBehaviour
     {
+        /// <summary>
+        /// Starts the panel sound sequence using the configured clips and fade settings.
+        /// </summary>
+        /// <param name="source">The temporary audio source used for playback.</param>
+        /// <param name="firstClip">The first clip played immediately.</param>
+        /// <param name="firstVolume">The playback volume for the first clip.</param>
+        /// <param name="secondClip">The follow-up clip played after the first clip ends.</param>
+        /// <param name="secondVolume">The playback volume for the follow-up clip.</param>
+        /// <param name="fadeImage">The optional image to fade while the follow-up clip plays.</param>
+        /// <param name="fadeTargetAlpha">The target alpha for the fade image.</param>
+        /// <param name="sceneToLoadAfterSequence">The optional scene loaded after playback finishes.</param>
         public void Play(
             AudioSource source,
             AudioClip firstClip,
@@ -161,6 +178,17 @@ public class RedPanelInteraction : MonoBehaviour
                 sceneToLoadAfterSequence));
         }
 
+        /// <summary>
+        /// Plays the first clip, then the follow-up clip, fade, and optional scene load in order.
+        /// </summary>
+        /// <param name="source">The temporary audio source used for playback.</param>
+        /// <param name="firstClip">The first clip played immediately.</param>
+        /// <param name="firstVolume">The playback volume for the first clip.</param>
+        /// <param name="secondClip">The follow-up clip played after the first clip ends.</param>
+        /// <param name="secondVolume">The playback volume for the follow-up clip.</param>
+        /// <param name="fadeImage">The optional image to fade while the follow-up clip plays.</param>
+        /// <param name="fadeTargetAlpha">The target alpha for the fade image.</param>
+        /// <param name="sceneToLoadAfterSequence">The optional scene loaded after playback finishes.</param>
         private IEnumerator PlaySequence(
             AudioSource source,
             AudioClip firstClip,
@@ -188,6 +216,10 @@ public class RedPanelInteraction : MonoBehaviour
             Destroy(gameObject);
         }
 
+        /// <summary>
+        /// Loads the configured scene when a scene name is provided and available.
+        /// </summary>
+        /// <param name="sceneName">The scene name to load after the panel sequence.</param>
         private void LoadSceneIfConfigured(string sceneName)
         {
             if (string.IsNullOrWhiteSpace(sceneName))
@@ -206,6 +238,12 @@ public class RedPanelInteraction : MonoBehaviour
             SceneManager.LoadScene(sceneName);
         }
 
+        /// <summary>
+        /// Fades an image to the requested alpha over the duration of the follow-up clip.
+        /// </summary>
+        /// <param name="fadeImage">The image to fade, or null to wait without fading.</param>
+        /// <param name="targetAlpha">The alpha value to reach by the end of the fade.</param>
+        /// <param name="duration">The fade duration in seconds.</param>
         private static IEnumerator FadeWhileClipPlays(
             Image fadeImage,
             float targetAlpha,
